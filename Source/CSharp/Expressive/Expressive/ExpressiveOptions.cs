@@ -24,6 +24,9 @@ namespace Expressive
         /// When using Round(), if a number is halfway between two others, it is rounded toward the nearest number that is away from zero.
         /// </summary>
         RoundAwayFromZero = 8,
+
+        UnknownTokensAsVariables = 16,
+
         /// <summary>
         /// All options are used.
         /// </summary>

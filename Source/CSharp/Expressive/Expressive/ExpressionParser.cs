@@ -447,7 +447,20 @@ namespace Expressive
                 {
                     tokens.Dequeue();
 
-                    throw new UnrecognisedTokenException(currentToken.CurrentToken);
+                    if (options.HasFlag(ExpressiveOptions.UnknownTokensAsVariables))
+                    {
+                        this.CheckForExistingParticipant(leftHandSide, currentToken, isWithinFunction);
+
+                        var variableName = currentToken.CurrentToken;
+                        leftHandSide = new VariableExpression(variableName);
+
+                        if (!variables.Contains(variableName, this.stringComparer))
+                        {
+                            variables.Add(variableName);
+                        }
+                    }
+                    else
+                        throw new UnrecognisedTokenException(currentToken.CurrentToken);
                 }
 
                 previousToken = currentToken;
