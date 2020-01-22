@@ -827,7 +827,7 @@ namespace Expressive
                 if (!foundUnrecognisedCharacter)
                 {
                     CheckForUnrecognised(unrecognised, tokens, index);
-                    unrecognised = null;
+                    //unrecognised = null;
                 }
                 index += (lengthProcessed == 0) ? 1 : lengthProcessed;
             }
@@ -840,10 +840,12 @@ namespace Expressive
 
         private static void CheckForUnrecognised(IList<char> unrecognised, IList<Token> tokens, int index)
         {
-            if (unrecognised != null)
+            if (unrecognised != null && unrecognised.Count > 0)
             {
                 string currentToken = new string(unrecognised.ToArray());
                 tokens.Add(new Token(currentToken, index - currentToken.Length)); // The index supplied is the current location not the start of the unrecoginsed token.
+
+                unrecognised.Clear();
             }
         }
 
