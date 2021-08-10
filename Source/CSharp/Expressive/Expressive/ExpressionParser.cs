@@ -439,7 +439,7 @@ namespace Expressive
                 {
                     if (!isWithinFunction)
                     {
-                        throw new ExpressiveException($"Unexpected token '{currentToken}'");
+                        throw new ExpressiveException($"Unexpected token '{currentToken.CurrentToken}' at position {currentToken.StartIndex}");
                     }
                     tokens.Dequeue();
                 }
