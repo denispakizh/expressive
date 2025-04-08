@@ -41,6 +41,7 @@ namespace Expressive
         private readonly IDictionary<string, Func<IExpression[], IDictionary<string, object>, object>> registeredFunctions;
         private readonly IDictionary<string, IOperator> registeredOperators;
         private readonly StringComparer stringComparer;
+        private readonly string[] stringOperands = new string[4] { "and", "not", "or", "mod" };
 
         #endregion
 
@@ -49,7 +50,7 @@ namespace Expressive
         internal ExpressionParser(ExpressiveOptions options)
         {
             this.options = options;
-            
+
             // For now we will ignore any specific cultures but keeping it in a single place to simplify changing later if required.
             this.currentCulture = CultureInfo.InvariantCulture;
 
@@ -59,6 +60,7 @@ namespace Expressive
             this.decimalSeparator = Convert.ToChar(this.currentCulture.NumberFormat.NumberDecimalSeparator);
             this.registeredFunctions = new Dictionary<string, Func<IExpression[], IDictionary<string, object>, object>>(this.GetDictionaryComparer(options));
             this.registeredOperators = new Dictionary<string, IOperator>(this.GetDictionaryComparer(options));
+
 
             #region Operators
             // TODO: Do we allow for turning off operators?
@@ -162,7 +164,7 @@ namespace Expressive
             this.RegisterFunction(new PadRightFunction());
             this.RegisterFunction(new RegexFunction());
             this.RegisterFunction(new StartsWithFunction());
-            this.RegisterFunction(new SubstringFunction());            
+            this.RegisterFunction(new SubstringFunction());
             #endregion
         }
 
@@ -240,7 +242,7 @@ namespace Expressive
             {
                 throw new ArgumentNullException(nameof(tokens), "You must call Tokenise before compiling");
             }
-            
+
             IExpression leftHandSide = null;
             var currentToken = tokens.PeekOrDefault();
             Token previousToken = null;
@@ -547,7 +549,7 @@ namespace Expressive
                 {
                     throw new MissingTokenException("Missing token, expecting ','.", ',');
                 }
-                
+
                 throw new ExpressiveException($"Unexpected token '{token.CurrentToken}' at index {token.StartIndex}");
             }
         }
@@ -704,14 +706,29 @@ namespace Expressive
                     // Loop through and find any matching operators.
                     foreach (var op in operators)
                     {
-                        var lookAhead = expression.Substring(index, Math.Min(op.Key.Length, expressionLength - index));
-
-                        if (CheckForTag(op.Key, lookAhead, this.options))
+                        if (index + op.Key.Length > expressionLength)
                         {
-                            CheckForUnrecognised(unrecognised, tokens, index);
-                            lengthProcessed = op.Key.Length;
-                            tokens.Add(new Token(lookAhead, index));
-                            break;
+                            continue;
+                        }
+                        string lookAhead2 = expression.Substring(index, Math.Min(op.Key.Length, expressionLength - index));
+                        if (string.Equals(lookAhead2, op.Key, StringComparison.OrdinalIgnoreCase))
+                        {
+                            bool isWholeWord = true;
+                            if (index > 0 && stringOperands.Contains(lookAhead2) && (char.IsLetterOrDigit(expression[index - 1]) || expression[index + op.Key.Length] != 0))
+                            {
+                                isWholeWord = false;
+                            }
+                            if (index + op.Key.Length < expressionLength && stringOperands.Contains(lookAhead2) && (char.IsLetterOrDigit(expression[index + op.Key.Length]) || expression[index + op.Key.Length] != 0))
+                            {
+                                isWholeWord = false;
+                            }
+                            if (isWholeWord)
+                            {
+                                CheckForUnrecognised(unrecognised, tokens, index);
+                                lengthProcessed = op.Key.Length;
+                                tokens.Add(new Token(lookAhead2, index));
+                                break;
+                            }
                         }
                     }
                 }
