@@ -41,7 +41,9 @@ namespace Expressive
         private readonly IDictionary<string, Func<IExpression[], IDictionary<string, object>, object>> registeredFunctions;
         private readonly IDictionary<string, IOperator> registeredOperators;
         private readonly StringComparer stringComparer;
-        private readonly string[] stringOperands = new string[4] { "and", "not", "or", "mod" };
+
+        //For handling spacing around textual operators
+        private readonly string[] stringOperators = new string[4] { "and", "not", "or", "mod" };
 
         #endregion
 
@@ -707,26 +709,33 @@ namespace Expressive
                     foreach (var op in operators)
                     {
                         if (index + op.Key.Length > expressionLength)
-                        {
                             continue;
-                        }
-                        string lookAhead2 = expression.Substring(index, Math.Min(op.Key.Length, expressionLength - index));
-                        if (string.Equals(lookAhead2, op.Key, StringComparison.OrdinalIgnoreCase))
+
+                        // Check for the operator.
+                        string lookAhead = expression.Substring(index, Math.Min(op.Key.Length, expressionLength - index));
+                        if (CheckForTag(op.Key, lookAhead, this.options))
                         {
                             bool isWholeWord = true;
-                            if (index > 0 && stringOperands.Contains(lookAhead2) && (char.IsLetterOrDigit(expression[index - 1]) || expression[index + op.Key.Length] != 0))
+
+                            //Checking previous character
+                            if (index > 0 &&
+                                stringOperators.Contains(lookAhead) && expression[index - 1] != ' ')
                             {
                                 isWholeWord = false;
                             }
-                            if (index + op.Key.Length < expressionLength && stringOperands.Contains(lookAhead2) && (char.IsLetterOrDigit(expression[index + op.Key.Length]) || expression[index + op.Key.Length] != 0))
+
+                            //Checking next character
+                            if (index + op.Key.Length < expressionLength &&
+                                stringOperators.Contains(lookAhead) && expression[index + op.Key.Length] != ' ')
                             {
                                 isWholeWord = false;
                             }
+
                             if (isWholeWord)
                             {
                                 CheckForUnrecognised(unrecognised, tokens, index);
                                 lengthProcessed = op.Key.Length;
-                                tokens.Add(new Token(lookAhead2, index));
+                                tokens.Add(new Token(lookAhead, index));
                                 break;
                             }
                         }
