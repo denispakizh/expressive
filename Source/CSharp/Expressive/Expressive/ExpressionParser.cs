@@ -716,17 +716,16 @@ namespace Expressive
                         if (CheckForTag(op.Key, lookAhead, this.options))
                         {
                             bool isWholeWord = true;
+                            bool isOperatorFound = stringOperators.Any(x => CheckForTag(x, lookAhead, this.options));
 
                             //Checking previous character
-                            if (index > 0 &&
-                                stringOperators.Contains(lookAhead) && expression[index - 1] != ' ')
+                            if (index > 0 && isOperatorFound && !Char.IsWhiteSpace(expression, index - 1))
                             {
                                 isWholeWord = false;
                             }
 
                             //Checking next character
-                            if (index + op.Key.Length < expressionLength &&
-                                stringOperators.Contains(lookAhead) && expression[index + op.Key.Length] != ' ')
+                            if (index + op.Key.Length < expressionLength && isOperatorFound && !Char.IsWhiteSpace(expression, index + op.Key.Length))
                             {
                                 isWholeWord = false;
                             }
